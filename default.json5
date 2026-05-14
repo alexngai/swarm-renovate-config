@@ -1,0 +1,95 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+
+  // Shared Renovate preset for the swarm/openhive ecosystem. Every repo in
+  // the ecosystem extends this so dependency policy — especially the
+  // first-party group list — lives in exactly one place.
+  //
+  // Consume it from a repo's renovate.json5 with:
+  //   { "extends": ["github>alexngai/swarm-renovate-config"] }
+
+  extends: [
+    'config:recommended',
+    ':semanticCommits',
+    ':dependencyDashboard',
+  ],
+
+  // Batch most updates into a Monday window to keep noise down. The
+  // first-party group below overrides this so ecosystem bumps land fast.
+  schedule: ['before 6am on monday'],
+  prConcurrentLimit: 12,
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ['before 6am on monday'],
+  },
+
+  packageRules: [
+    // First-party ecosystem packages — one grouped PR, no release-age delay,
+    // no schedule wait, so a fresh publish of any of them propagates to every
+    // consumer within hours. THIS LIST is the whole reason the preset exists:
+    // add a package here once and every ecosystem repo picks it up.
+    {
+      groupName: 'first-party (swarm ecosystem)',
+      matchPackageNames: [
+        'agent-iam',
+        'agent-inbox',
+        'agent-session-parser',
+        'agent-workspace',
+        'claude-code-swarm',
+        'cognitive-core',
+        'git-cascade',
+        'macro-agent',
+        'minimem',
+        'openhive',
+        'openhive-types',
+        'openswarm',
+        'opentasks',
+        'openteams',
+        'openteams-editor',
+        'sessionlog',
+        'skill-tree',
+        'skill-tree-indexer',
+        'swarm-dispatch',
+        'swarmcraft',
+        'swarmkit',
+      ],
+      schedule: ['at any time'],
+      minimumReleaseAge: '0 days',
+      labels: ['dependencies', 'first-party'],
+    },
+
+    // Dev tooling + types — grouped, automerged on green CI for patch/minor.
+    {
+      groupName: 'dev tooling',
+      matchDepTypes: ['devDependencies'],
+      matchUpdateTypes: ['patch', 'minor'],
+      automerge: true,
+      labels: ['dependencies', 'dev'],
+    },
+
+    // Third-party runtime deps — grouped for patch/minor, held a few days so
+    // a bad publish has time to be yanked before it reaches us.
+    {
+      groupName: 'third-party (non-major)',
+      matchDepTypes: ['dependencies', 'optionalDependencies'],
+      matchUpdateTypes: ['patch', 'minor'],
+      minimumReleaseAge: '3 days',
+      labels: ['dependencies'],
+    },
+
+    // Major bumps are always isolated PRs and never automerged.
+    {
+      matchUpdateTypes: ['major'],
+      automerge: false,
+      labels: ['dependencies', 'major'],
+    },
+
+    // MAP SDK is version-managed by hand across the ecosystem — Renovate
+    // must not open PRs for it. Listed last so this wins over the
+    // third-party rule above.
+    {
+      matchPackageNames: ['@multi-agent-protocol/sdk'],
+      enabled: false,
+    },
+  ],
+}
