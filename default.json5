@@ -55,6 +55,10 @@
       ],
       schedule: ['at any time'],
       minimumReleaseAge: '0 days',
+      // Automerged: these are our own publishes — contained blast radius,
+      // and a bad release is fast to fix at the source. Third-party stays
+      // manual until per-repo CI exists to gate it.
+      automerge: true,
       labels: ['dependencies', 'first-party'],
     },
 
